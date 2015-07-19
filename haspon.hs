@@ -212,7 +212,7 @@ dropLoop pStop numRow bd = do
     else do
       when pStop $ do
         hPutStrLn stdout $ showBoard' bd
-        threadDelay $ 1000 * 200  
+        threadDelay $ 1000 * 200
 
       hPutStrLn stdout $ showBoard' bd'
       threadDelay $ 1000 * 100
