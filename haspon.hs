@@ -7,6 +7,8 @@ import Data.List.Split (chunksOf)
 import Data.List (intercalate, group, groupBy, transpose, foldl', nub)
 import Text.Printf (printf)
 
+import System.Console.ANSI
+
 
 data Panel = PA | PB | PC | PD | PE deriving (Eq, Enum, Show)
 data Cell = Null | Box Panel deriving (Show, Eq)
@@ -34,6 +36,7 @@ main = do
   let
     gen = mkStdGen $ sd + 1
     bd = mkBoard sd numCol numRow
+  clearScreen
   loopGame 0 gen 0 0 0 bd
  where
   numCol = 6  :: ColInd
@@ -41,8 +44,9 @@ main = do
   loopGame :: Int -> StdGen -> Score -> ColInd -> RowInd -> Board -> IO ()
   loopGame i g score c r bd = do
     -- print information
-    hPutStrLn stdout $ "score " ++ show score
-    hPutStrLn stdout $ show . evalBoard $ bd
+    setCursorPosition 0 0
+    --hPutStrLn stdout $ "score " ++ show score
+    --hPutStrLn stdout $ show . evalBoard $ bd
     printBoard c r bd
     hFlush stdout
     -- operation
@@ -61,42 +65,63 @@ main = do
             bd'' <- dropLoop True numRow bd'
             loopGame (i + 1) g' (score + s) c' r' bd''
 
------ Convert data to String -----
-showPanel :: Panel -> String
-showPanel PA = "@"
-showPanel PB = "&"
-showPanel PC = "#"
-showPanel PD = "O"
-showPanel PE = "v"
+type Color2 = (ColorIntensity, Color)
 
-showCell :: Cell -> String
-showCell Null    = "."
+vividWhite = (Vivid, White)
+vividRed = (Vivid, Red)
+vividGreen = (Vivid, Green)
+vividYellow = (Vivid, Yellow)
+vividBlue = (Vivid, Blue)
+vividMagenta = (Vivid, Magenta)
+dullBlue = (Dull, Blue)
+dullBlack = (Dull, Black)
+dullYellow = (Dull, Yellow)
+dullGreen = (Dull, Green)
+
+colorStr :: Color2 -> Color2 -> String -> IO ()
+colorStr (fgi, fg) (bgi, bg) str = do
+  setSGR [SetColor Foreground fgi fg, SetColor Background bgi bg]
+  putStr str
+
+clearColor :: IO ()
+clearColor = setSGR []
+
+----- Convert data to String -----
+showPanel :: Panel -> IO ()
+showPanel PA = colorStr vividWhite vividRed "@"
+showPanel PB = colorStr vividWhite vividBlue "&"
+showPanel PC = colorStr dullBlack vividGreen "#"
+showPanel PD = colorStr vividWhite dullYellow "O"
+showPanel PE = colorStr vividWhite vividMagenta "v"
+
+showCell :: Cell -> IO ()
+showCell Null    = putStr "."
 showCell (Box p) = showPanel p
 
-showCell' :: Cursor -> Cell -> String
-showCell' CNone  cell = " " ++ showCell cell ++ " "
-showCell' CLeft  cell = "[" ++ showCell cell ++ "."
-showCell' CRight cell = "." ++ showCell cell ++ "]"
+showCell' :: Cursor -> Cell -> IO ()
+showCell' CNone  cell = clearColor >> putStr " " >> showCell cell >> clearColor >> putStr " "
+showCell' CLeft  cell = clearColor >> putStr "[" >> showCell cell >> clearColor >> putStr "."
+showCell' CRight cell = clearColor >> putStr "." >> showCell cell >> clearColor >> putStr "]"
 
-showBoard' :: Board -> String
-showBoard' = unlines . map (foldl' (++) [] . map (showCell' CNone)) . reverse . transpose
+showBoard' :: Board -> IO ()
+showBoard' board = mapM_ (\ln -> mapM_ (showCell' CNone) ln >> putStr "\n") $ reverse $ transpose board
 
 printBoard' :: Board -> IO ()
-printBoard' board = hPutStrLn stdout $ showBoard' board
+printBoard' board = showBoard' board >> clearColor
 
-showBoard :: Int -> Int -> Board -> String
+showBoard :: Int -> Int -> Board -> IO ()
 showBoard c r bd = rowStr
  where
   rs = transpose bd
   (rsD, row, rsU) = extract r rs
   (csL, cellL, cellR, csR) = extract' c row
-  row' = intercalate "" $ map (showCell' CNone) csL ++ showCell' CLeft cellL : showCell' CRight cellR : map (showCell' CNone) csR
-  rowStr = unlines . reverse $ map showNormalRow rsD ++ row' : map showNormalRow rsU
+  row' = mapM_ (showCell' CNone) csL >> showCell' CLeft cellL >> showCell' CRight cellR >> mapM_ (showCell' CNone) csR >> putStr "\n"
+  rowStr = sequence_ . reverse $ map showNormalRow rsD ++ row' : map showNormalRow rsU
 
-  showNormalRow = intercalate "" . map (showCell' CNone)
+  showNormalRow row = mapM_ (showCell' CNone) row >> putStr "\n"
 
 printBoard :: Int -> Int -> Board -> IO ()
-printBoard c r bd = hPutStrLn stdout  $ showBoard c r bd
+printBoard c r bd = showBoard c r bd >> clearColor
 
 ----------
 
@@ -208,7 +233,8 @@ vanishAndDrop numRow bd = do
   case vanish bd of
     Nothing -> return (bd, [])
     Just (bd', score) -> do
-      hPutStrLn stdout $ "+" ++ show score ++ "!"
+      setCursorPosition 0 0
+      --hPutStrLn stdout $ "+" ++ show score ++ "!"
       printBoard' bd'
       threadDelay $ 1000 * 300
       bd'' <- dropLoop False numRow bd'
@@ -222,9 +248,11 @@ dropLoop pStop numRow bd = do
     then return bd
     else do
       when pStop $ do
+        setCursorPosition 0 0
         printBoard' bd
         threadDelay $ 1000 * 200
 
+      setCursorPosition 0 0
       printBoard' bd'
       threadDelay $ 1000 * 100
       dropLoop False numRow bd'
