@@ -7,6 +7,8 @@ import Data.List.Split (chunksOf)
 import Data.List (intercalate, group, groupBy, transpose, foldl', nub)
 import Text.Printf (printf)
 
+import System.Console.ANSI
+
 
 data Panel = PA | PB | PC | PD | PE deriving (Eq, Enum, Show)
 data Cell = Null | Box Panel deriving (Show, Eq)
@@ -61,28 +63,49 @@ main = do
             bd'' <- dropLoop True numRow bd'
             loopGame (i + 1) g' (score + s) c' r' bd''
 
+type Color2 = (ColorIntensity, Color)
+
+vividWhite = (Vivid, White)
+vividRed = (Vivid, Red)
+vividGreen = (Vivid, Green)
+vividYellow = (Vivid, Yellow)
+vividBlue = (Vivid, Blue)
+vividMagenta = (Vivid, Magenta)
+dullBlue = (Dull, Blue)
+dullBlack = (Dull, Black)
+dullYellow = (Dull, Yellow)
+dullGreen = (Dull, Green)
+
+colorStr :: Color2 -> Color2 -> String -> IO ()
+colorStr (fgi, fg) (bgi, bg) str = do
+  setSGR [SetColor Foreground fgi fg, SetColor Background bgi bg]
+  putStr str
+
+clearColor :: IO ()
+clearColor = setSGR []
+
 ----- Convert data to String -----
 showPanel :: Panel -> IO ()
-showPanel PA = putStr "@"
-showPanel PB = putStr "&"
-showPanel PC = putStr "#"
-showPanel PD = putStr "O"
-showPanel PE = putStr "v"
+showPanel PA = colorStr vividWhite vividRed "@"
+showPanel PB = colorStr vividWhite vividBlue "&"
+showPanel PC = colorStr dullBlack vividGreen "#"
+showPanel PD = colorStr vividWhite dullYellow "O"
+showPanel PE = colorStr vividWhite vividMagenta "v"
 
 showCell :: Cell -> IO ()
 showCell Null    = putStr "."
 showCell (Box p) = showPanel p
 
 showCell' :: Cursor -> Cell -> IO ()
-showCell' CNone  cell = putStr " " >> showCell cell >> putStr " "
-showCell' CLeft  cell = putStr "[" >> showCell cell >> putStr "."
-showCell' CRight cell = putStr "." >> showCell cell >> putStr "]"
+showCell' CNone  cell = clearColor >> putStr " " >> showCell cell >> clearColor >> putStr " "
+showCell' CLeft  cell = clearColor >> putStr "[" >> showCell cell >> clearColor >> putStr "."
+showCell' CRight cell = clearColor >> putStr "." >> showCell cell >> clearColor >> putStr "]"
 
 showBoard' :: Board -> IO ()
 showBoard' board = mapM_ (\ln -> mapM_ (showCell' CNone) ln >> putStr "\n") $ reverse $ transpose board
 
 printBoard' :: Board -> IO ()
-printBoard' = showBoard'
+printBoard' board = showBoard' board >> clearColor
 
 showBoard :: Int -> Int -> Board -> IO ()
 showBoard c r bd = rowStr
@@ -96,7 +119,7 @@ showBoard c r bd = rowStr
   showNormalRow row = mapM_ (showCell' CNone) row >> putStr "\n"
 
 printBoard :: Int -> Int -> Board -> IO ()
-printBoard = showBoard
+printBoard c r bd = showBoard c r bd >> clearColor
 
 ----------
 
