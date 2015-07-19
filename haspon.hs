@@ -62,41 +62,41 @@ main = do
             loopGame (i + 1) g' (score + s) c' r' bd''
 
 ----- Convert data to String -----
-showPanel :: Panel -> String
-showPanel PA = "@"
-showPanel PB = "&"
-showPanel PC = "#"
-showPanel PD = "O"
-showPanel PE = "v"
+showPanel :: Panel -> IO ()
+showPanel PA = putStr "@"
+showPanel PB = putStr "&"
+showPanel PC = putStr "#"
+showPanel PD = putStr "O"
+showPanel PE = putStr "v"
 
-showCell :: Cell -> String
-showCell Null    = "."
+showCell :: Cell -> IO ()
+showCell Null    = putStr "."
 showCell (Box p) = showPanel p
 
-showCell' :: Cursor -> Cell -> String
-showCell' CNone  cell = " " ++ showCell cell ++ " "
-showCell' CLeft  cell = "[" ++ showCell cell ++ "."
-showCell' CRight cell = "." ++ showCell cell ++ "]"
+showCell' :: Cursor -> Cell -> IO ()
+showCell' CNone  cell = putStr " " >> showCell cell >> putStr " "
+showCell' CLeft  cell = putStr "[" >> showCell cell >> putStr "."
+showCell' CRight cell = putStr "." >> showCell cell >> putStr "]"
 
-showBoard' :: Board -> String
-showBoard' = unlines . map (foldl' (++) [] . map (showCell' CNone)) . reverse . transpose
+showBoard' :: Board -> IO ()
+showBoard' board = mapM_ (\ln -> mapM_ (showCell' CNone) ln >> putStr "\n") $ reverse $ transpose board
 
 printBoard' :: Board -> IO ()
-printBoard' board = hPutStrLn stdout $ showBoard' board
+printBoard' = showBoard'
 
-showBoard :: Int -> Int -> Board -> String
+showBoard :: Int -> Int -> Board -> IO ()
 showBoard c r bd = rowStr
  where
   rs = transpose bd
   (rsD, row, rsU) = extract r rs
   (csL, cellL, cellR, csR) = extract' c row
-  row' = intercalate "" $ map (showCell' CNone) csL ++ showCell' CLeft cellL : showCell' CRight cellR : map (showCell' CNone) csR
-  rowStr = unlines . reverse $ map showNormalRow rsD ++ row' : map showNormalRow rsU
+  row' = mapM_ (showCell' CNone) csL >> showCell' CLeft cellL >> showCell' CRight cellR >> mapM_ (showCell' CNone) csR >> putStr "\n"
+  rowStr = sequence_ . reverse $ map showNormalRow rsD ++ row' : map showNormalRow rsU
 
-  showNormalRow = intercalate "" . map (showCell' CNone)
+  showNormalRow row = mapM_ (showCell' CNone) row >> putStr "\n"
 
 printBoard :: Int -> Int -> Board -> IO ()
-printBoard c r bd = hPutStrLn stdout  $ showBoard c r bd
+printBoard = showBoard
 
 ----------
 
