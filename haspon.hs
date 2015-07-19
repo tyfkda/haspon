@@ -45,9 +45,9 @@ main = do
   loopGame i g score c r bd = do
     -- print information
     setCursorPosition 0 0
-    --hPutStrLn stdout $ "score " ++ show score
-    --hPutStrLn stdout $ show . evalBoard $ bd
     printBoard c r bd
+    hPutStrLn stdout $ "score " ++ show score
+    hPutStrLn stdout $ show . evalBoard $ bd
     hFlush stdout
     -- operation
     chr <- getChar
@@ -58,12 +58,18 @@ main = do
         case parseCommand chr of
           Nothing  -> loopGame i g score c r bd
           Just cmd -> do
-            (g', c', r', bd', mScore) <- runCommand numCol numRow g c r bd cmd
-            let
-              s = maybe 0 evalScores mScore
-            hPutStrLn stdout $ maybe "" scoresToString mScore
-            bd'' <- dropLoop True numRow bd'
-            loopGame (i + 1) g' (score + s) c' r' bd''
+            (g', s, c', r', bd') <- stepCommand numCol numRow g c r bd cmd
+            (g'', s', c'', r'', bd'') <- stepCommand numCol numRow g' c' r' bd' Vanish
+            loopGame (i + 1) g'' (score + s + s') c'' r'' bd''
+
+stepCommand :: ColInd -> RowInd -> StdGen -> ColInd -> RowInd -> Board -> Command -> IO (StdGen, Int, Int, Int, Board)
+stepCommand numCol numRow g c r bd cmd = do
+  (g', c', r', bd', mScore) <- runCommand numCol numRow g c r bd cmd
+  let
+    s = maybe 0 evalScores mScore
+  hPutStrLn stdout $ maybe "" scoresToString mScore
+  bd'' <- dropLoop True numRow bd'
+  return (g', s, c', r', bd'')
 
 type Color2 = (ColorIntensity, Color)
 
@@ -139,7 +145,7 @@ parseCommand 's' = Just $ Move 0 (-1)
 parseCommand 'a' = Just $ Move (-1) 0
 parseCommand 'd' = Just $ Move 1 0
 parseCommand 'j' = Just Swap
-parseCommand 'k' = Just Vanish
+--parseCommand 'k' = Just Vanish
 parseCommand 'l' = Just Lift
 parseCommand _   = Nothing
 
