@@ -24,6 +24,7 @@ type Score = Int
 -- [j] : swap panels
 -- [k] : vanish
 -- [l] : lift row
+-- [q] : quit the app
 
 main :: IO ()
 main = do
@@ -46,16 +47,19 @@ main = do
     hFlush stdout
     -- operation
     chr <- getChar
-    hPutStrLn stdout ""
-    case parseCommand chr of
-      Nothing  -> loopGame i g score c r bd
-      Just cmd -> do
-        (g', c', r', bd', mScore) <- runCommand numCol numRow g c r bd cmd
-        let
-          s = maybe 0 evalScores mScore
-        hPutStrLn stdout $ maybe "" scoresToString mScore
-        bd'' <- dropLoop True numRow bd'
-        loopGame (i + 1) g' (score + s) c' r' bd''
+    case chr of
+      'q' -> putStrLn "Bye!"
+      otherwise -> do
+        hPutStrLn stdout ""
+        case parseCommand chr of
+          Nothing  -> loopGame i g score c r bd
+          Just cmd -> do
+            (g', c', r', bd', mScore) <- runCommand numCol numRow g c r bd cmd
+            let
+              s = maybe 0 evalScores mScore
+            hPutStrLn stdout $ maybe "" scoresToString mScore
+            bd'' <- dropLoop True numRow bd'
+            loopGame (i + 1) g' (score + s) c' r' bd''
 
 ----- Convert data to String -----
 showPanel :: Panel -> String
