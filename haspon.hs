@@ -36,6 +36,7 @@ main = do
   let
     gen = mkStdGen $ sd + 1
     bd = mkBoard sd numCol numRow
+  clearScreen
   loopGame 0 gen 0 0 0 bd
  where
   numCol = 6  :: ColInd
@@ -43,8 +44,9 @@ main = do
   loopGame :: Int -> StdGen -> Score -> ColInd -> RowInd -> Board -> IO ()
   loopGame i g score c r bd = do
     -- print information
-    hPutStrLn stdout $ "score " ++ show score
-    hPutStrLn stdout $ show . evalBoard $ bd
+    setCursorPosition 0 0
+    --hPutStrLn stdout $ "score " ++ show score
+    --hPutStrLn stdout $ show . evalBoard $ bd
     printBoard c r bd
     hFlush stdout
     -- operation
@@ -231,7 +233,8 @@ vanishAndDrop numRow bd = do
   case vanish bd of
     Nothing -> return (bd, [])
     Just (bd', score) -> do
-      hPutStrLn stdout $ "+" ++ show score ++ "!"
+      setCursorPosition 0 0
+      --hPutStrLn stdout $ "+" ++ show score ++ "!"
       printBoard' bd'
       threadDelay $ 1000 * 300
       bd'' <- dropLoop False numRow bd'
@@ -245,9 +248,11 @@ dropLoop pStop numRow bd = do
     then return bd
     else do
       when pStop $ do
+        setCursorPosition 0 0
         printBoard' bd
         threadDelay $ 1000 * 200
 
+      setCursorPosition 0 0
       printBoard' bd'
       threadDelay $ 1000 * 100
       dropLoop False numRow bd'
