@@ -40,7 +40,7 @@ main = do
   loopGame 0 gen 0 0 0 bd
  where
   numCol = 6  :: ColInd
-  numRow = 10 :: RowInd
+  numRow = 13 :: RowInd
   loopGame :: Int -> StdGen -> Score -> ColInd -> RowInd -> Board -> IO ()
   loopGame i g score c r bd = do
     -- print information
