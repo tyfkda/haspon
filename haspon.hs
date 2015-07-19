@@ -42,7 +42,7 @@ main = do
     -- print information
     hPutStrLn stdout $ "score " ++ show score
     hPutStrLn stdout $ show . evalBoard $ bd
-    hPutStrLn stdout $ showBoard c r bd
+    printBoard c r bd
     hFlush stdout
     -- operation
     chr <- getChar
@@ -77,6 +77,9 @@ showCell' CRight cell = "." ++ showCell cell ++ "]"
 showBoard' :: Board -> String
 showBoard' = unlines . map (foldl' (++) [] . map (showCell' CNone)) . reverse . transpose
 
+printBoard' :: Board -> IO ()
+printBoard' board = hPutStrLn stdout $ showBoard' board
+
 showBoard :: Int -> Int -> Board -> String
 showBoard c r bd = rowStr
  where
@@ -87,6 +90,10 @@ showBoard c r bd = rowStr
   rowStr = unlines . reverse $ map showNormalRow rsD ++ row' : map showNormalRow rsU
 
   showNormalRow = intercalate "" . map (showCell' CNone)
+
+printBoard :: Int -> Int -> Board -> IO ()
+printBoard c r bd = hPutStrLn stdout  $ showBoard c r bd
+
 ----------
 
 
@@ -198,7 +205,7 @@ vanishAndDrop numRow bd = do
     Nothing -> return (bd, [])
     Just (bd', score) -> do
       hPutStrLn stdout $ "+" ++ show score ++ "!"
-      hPutStrLn stdout $ showBoard' bd'
+      printBoard' bd'
       threadDelay $ 1000 * 300
       bd'' <- dropLoop False numRow bd'
       (board, scores) <- vanishAndDrop numRow bd''
@@ -211,10 +218,10 @@ dropLoop pStop numRow bd = do
     then return bd
     else do
       when pStop $ do
-        hPutStrLn stdout $ showBoard' bd
+        printBoard' bd
         threadDelay $ 1000 * 200
 
-      hPutStrLn stdout $ showBoard' bd'
+      printBoard' bd'
       threadDelay $ 1000 * 100
       dropLoop False numRow bd'
 
