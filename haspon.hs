@@ -1,6 +1,5 @@
 import System.IO (BufferMode (..), stdout, stdin, hPutStrLn, hFlush, hSetBuffering)
-import System.Environment (getArgs)
-import System.Random (StdGen, randomRs, randomR, mkStdGen)
+import System.Random (StdGen, randomRs, randomR, mkStdGen, getStdRandom, random)
 import Control.Monad (when)
 import Control.Arrow
 import Control.Concurrent (threadDelay)
@@ -30,9 +29,8 @@ main :: IO ()
 main = do
   hSetBuffering stdout $ BlockBuffering (Just 1)
   hSetBuffering stdin NoBuffering
-  (seed:_) <- getArgs
+  sd <- getStdRandom random :: IO Int
   let
-    sd = read seed
     gen = mkStdGen $ sd + 1
     bd = mkBoard sd numCol numRow
   loopGame 0 gen 0 0 0 bd
