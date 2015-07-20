@@ -94,14 +94,14 @@ clearColor = setSGR []
 
 ----- Convert data to String -----
 showPanel :: Panel -> IO ()
-showPanel PA = colorStr vividWhite vividRed "@"
-showPanel PB = colorStr vividWhite vividBlue "&"
-showPanel PC = colorStr dullBlack vividGreen "#"
-showPanel PD = colorStr vividWhite dullYellow "O"
-showPanel PE = colorStr vividWhite vividMagenta "v"
+showPanel PA = colorStr vividWhite vividRed "@@"
+showPanel PB = colorStr vividWhite vividBlue "&&"
+showPanel PC = colorStr dullBlack vividGreen "##"
+showPanel PD = colorStr vividWhite dullYellow "OO"
+showPanel PE = colorStr vividWhite vividMagenta "vv"
 
 showCell :: Cell -> IO ()
-showCell Null    = putStr "."
+showCell Null    = putStr ".."
 showCell (Box p) = showPanel p
 
 showCell' :: Cursor -> Cell -> IO ()
